@@ -14,7 +14,7 @@ type KeyMap struct {
 	Refresh     key.Binding
 	RefreshAll  key.Binding
 	MarkRead    key.Binding
-	MarkAllRead key.Binding
+	MarkUnread  key.Binding
 	MarkDone    key.Binding
 	Unsubscribe key.Binding
 	Open        key.Binding
@@ -31,6 +31,7 @@ type KeyMap struct {
 }
 
 // DefaultKeyMap returns the default keybinding configuration.
+// Action keys mirror GitHub's web notification shortcuts.
 func DefaultKeyMap() KeyMap {
 	return KeyMap{
 		Up: key.NewBinding(
@@ -61,21 +62,21 @@ func DefaultKeyMap() KeyMap {
 			key.WithKeys("R"),
 			key.WithHelp("R", "refresh all"),
 		),
-		MarkRead: key.NewBinding(
-			key.WithKeys("m"),
-			key.WithHelp("m", "mark read"),
-		),
-		MarkAllRead: key.NewBinding(
-			key.WithKeys("M"),
-			key.WithHelp("M", "mark all read"),
-		),
 		MarkDone: key.NewBinding(
-			key.WithKeys("d"),
-			key.WithHelp("d", "mark done"),
+			key.WithKeys("e"),
+			key.WithHelp("e", "done"),
+		),
+		MarkRead: key.NewBinding(
+			key.WithKeys("I"),
+			key.WithHelp("⇧I", "read"),
+		),
+		MarkUnread: key.NewBinding(
+			key.WithKeys("U"),
+			key.WithHelp("⇧U", "unread"),
 		),
 		Unsubscribe: key.NewBinding(
-			key.WithKeys("u"),
-			key.WithHelp("u", "unsubscribe"),
+			key.WithKeys("M"),
+			key.WithHelp("⇧M", "unsub"),
 		),
 		Open: key.NewBinding(
 			key.WithKeys("o"),

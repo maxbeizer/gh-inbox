@@ -162,13 +162,13 @@ func (m Model) buildRightSegments() []segment {
 
 	hints := []hint{
 		{"j/k", "nav", theme.ColorSurface1},
-		{"m", "read", theme.ColorSurface1},
-		{"d", "done", theme.ColorSurface1},
-		{"u", "unsub", theme.ColorSurface1},
-		{"o", "open", theme.ColorSurface1},
+		{"e", "done", theme.ColorSurface1},
+		{"⇧I", "read", theme.ColorSurface1},
+		{"⇧U", "unread", theme.ColorSurface1},
+		{"⇧M", "unsub", theme.ColorSurface2},
+		{"o", "open", theme.ColorSurface2},
 		{"p", "preview", theme.ColorSurface2},
 		{"/", "search", theme.ColorSurface2},
-		{"f", "filter", theme.ColorSurface2},
 		{"?", "help", theme.ColorMauve},
 	}
 

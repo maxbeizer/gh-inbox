@@ -144,8 +144,3 @@ func (c *Client) Unsubscribe(threadID string) error {
 	path := fmt.Sprintf("notifications/threads/%s/subscription", threadID)
 	return c.rest.Delete(path, nil)
 }
-
-// MarkAllRead marks all notifications as read.
-func (c *Client) MarkAllRead() error {
-	return c.rest.Put("notifications", nil, nil)
-}

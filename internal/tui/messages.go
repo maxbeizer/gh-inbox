@@ -25,11 +25,6 @@ type ActionCompleteMsg struct {
 	Err    error
 }
 
-// AllReadMsg is sent when "mark all read" completes.
-type AllReadMsg struct {
-	Err error
-}
-
 // StatusMsg is a temporary status bar message.
 type StatusMsg struct {
 	Text    string

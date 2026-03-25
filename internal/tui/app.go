@@ -117,18 +117,6 @@ func (a App) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 		return a, nil
 
-	case AllReadMsg:
-		if msg.Err != nil {
-			a.statusbar.SetStatus(fmt.Sprintf("Error: %v", msg.Err), true)
-			return a, nil
-		}
-		for i := range a.allNotifications {
-			a.allNotifications[i].Unread = false
-		}
-		a.applyFilters()
-		a.statusbar.SetStatus("All marked as read", false)
-		return a, nil
-
 	case tea.KeyMsg:
 		return a.handleKey(msg)
 
@@ -214,8 +202,8 @@ func (a App) handleKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	case key.Matches(msg, a.keys.MarkRead):
 		return a, a.markSelectedRead()
 
-	case key.Matches(msg, a.keys.MarkAllRead):
-		return a, a.markAllRead()
+	case key.Matches(msg, a.keys.MarkUnread):
+		return a, a.markSelectedUnread()
 
 	case key.Matches(msg, a.keys.MarkDone):
 		return a, a.markSelectedDone()
@@ -307,12 +295,23 @@ func (a App) View() tea.View {
 	} else if a.help.Visible() {
 		content = a.help.View()
 	} else {
+		headerView := a.header.View()
+		footerView := a.statusbar.View()
+		headerH := lipgloss.Height(headerView)
+		footerH := lipgloss.Height(footerView)
+
+		// Main content fills whatever is left
+		mainH := a.height - headerH - footerH
+		if a.filter.Active() {
+			mainH--
+		}
+		if mainH < 1 {
+			mainH = 1
+		}
+
 		var sections []string
+		sections = append(sections, headerView)
 
-		// Header
-		sections = append(sections, a.header.View())
-
-		// Filter bar (only when active)
 		if a.filter.Active() {
 			sections = append(sections, a.filter.View())
 		}
@@ -327,13 +326,11 @@ func (a App) View() tea.View {
 			mainContent = tableView
 		}
 		mainContent = lipgloss.NewStyle().
-			Height(a.contentHeight()).
+			Height(mainH).
 			Width(a.width).
 			Render(mainContent)
 		sections = append(sections, mainContent)
-
-		// Status bar
-		sections = append(sections, a.statusbar.View())
+		sections = append(sections, footerView)
 
 		content = lipgloss.JoinVertical(lipgloss.Left, sections...)
 	}
@@ -344,19 +341,6 @@ func (a App) View() tea.View {
 	return v
 }
 
-// contentHeight returns the height available for the main content area.
-func (a *App) contentHeight() int {
-	// header=1 + statusbar=1 = 2 reserved lines
-	h := a.height - 2
-	if a.filter.Active() {
-		h--
-	}
-	if h < 1 {
-		h = 1
-	}
-	return h
-}
-
 // layoutComponents distributes width/height to child components.
 func (a *App) layoutComponents() {
 	a.header.SetWidth(a.width)
@@ -364,7 +348,16 @@ func (a *App) layoutComponents() {
 	a.filter.SetWidth(a.width)
 	a.help.SetSize(a.width, a.height)
 
-	ch := a.contentHeight()
+	// Measure rendered heights to get accurate remaining space
+	headerH := lipgloss.Height(a.header.View())
+	footerH := max(lipgloss.Height(a.statusbar.View()), 1)
+	ch := a.height - headerH - footerH
+	if a.filter.Active() {
+		ch--
+	}
+	if ch < 1 {
+		ch = 1
+	}
 
 	if a.preview.Visible() {
 		tableW := a.width * 55 / 100
@@ -521,11 +514,22 @@ func (a *App) markSelectedRead() tea.Cmd {
 	}
 }
 
-func (a *App) markAllRead() tea.Cmd {
-	return func() tea.Msg {
-		err := a.client.MarkAllRead()
-		return AllReadMsg{Err: err}
+func (a *App) markSelectedUnread() tea.Cmd {
+	n := a.table.Selected()
+	if n == nil {
+		return nil
 	}
+	// Toggle unread state locally — the API has no "mark unread" endpoint,
+	// but the notification will reappear as unread on next sync if still active.
+	for i := range a.allNotifications {
+		if a.allNotifications[i].ID == n.ID {
+			a.allNotifications[i].Unread = true
+			break
+		}
+	}
+	a.applyFilters()
+	a.statusbar.SetStatus("Marked as unread", false)
+	return nil
 }
 
 func (a *App) markSelectedDone() tea.Cmd {

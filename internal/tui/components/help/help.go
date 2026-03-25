@@ -29,12 +29,12 @@ var sections = []struct {
 		},
 	},
 	{
-		title: "Actions",
+		title: "Actions (matches GitHub web)",
 		bindings: []binding{
-			{"m", "Mark as read"},
-			{"M", "Mark all as read"},
-			{"d", "Mark as done (dismiss)"},
-			{"u", "Unsubscribe from thread"},
+			{"e", "Mark as done"},
+			{"⇧I", "Mark as read"},
+			{"⇧U", "Mark as unread"},
+			{"⇧M", "Unsubscribe"},
 			{"o", "Open in browser"},
 			{"y", "Copy URL to clipboard"},
 		},

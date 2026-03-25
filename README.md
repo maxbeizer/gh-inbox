@@ -31,10 +31,10 @@ gh inbox
 | `j/k` or `↑/↓` | Navigate |
 | `g/G` | Top/bottom |
 | `p` or `Enter` | Toggle preview |
-| `m` | Mark as read |
-| `M` | Mark all as read |
-| `d` | Mark as done |
-| `u` | Unsubscribe |
+| `e` | Mark as done |
+| `⇧I` | Mark as read |
+| `⇧U` | Mark as unread |
+| `⇧M` | Unsubscribe |
 | `o` | Open in browser |
 | `y` | Copy URL |
 | `r/R` | Refresh / refresh all |
@@ -43,6 +43,8 @@ gh inbox
 | `s` | Cycle sort (updated → repo → reason) |
 | `?` | Help |
 | `q` | Quit |
+
+> Action keys match [GitHub's web notification shortcuts](https://docs.github.com/en/get-started/accessibility/keyboard-shortcuts#notifications).
 
 ## Development
 
