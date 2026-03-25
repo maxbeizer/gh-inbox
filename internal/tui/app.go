@@ -317,15 +317,20 @@ func (a App) View() tea.View {
 			sections = append(sections, a.filter.View())
 		}
 
-		// Main content: table (+ optional preview)
+		// Main content: table (+ optional preview) — fixed height to push footer down
 		tableView := a.table.View()
+		var mainContent string
 		if a.preview.Visible() {
 			previewView := a.preview.View()
-			mainContent := lipgloss.JoinHorizontal(lipgloss.Top, tableView, previewView)
-			sections = append(sections, mainContent)
+			mainContent = lipgloss.JoinHorizontal(lipgloss.Top, tableView, previewView)
 		} else {
-			sections = append(sections, tableView)
+			mainContent = tableView
 		}
+		mainContent = lipgloss.NewStyle().
+			Height(a.contentHeight()).
+			Width(a.width).
+			Render(mainContent)
+		sections = append(sections, mainContent)
 
 		// Status bar
 		sections = append(sections, a.statusbar.View())
@@ -339,6 +344,19 @@ func (a App) View() tea.View {
 	return v
 }
 
+// contentHeight returns the height available for the main content area.
+func (a *App) contentHeight() int {
+	// header=1 + statusbar=1 = 2 reserved lines
+	h := a.height - 2
+	if a.filter.Active() {
+		h--
+	}
+	if h < 1 {
+		h = 1
+	}
+	return h
+}
+
 // layoutComponents distributes width/height to child components.
 func (a *App) layoutComponents() {
 	a.header.SetWidth(a.width)
@@ -346,19 +364,15 @@ func (a *App) layoutComponents() {
 	a.filter.SetWidth(a.width)
 	a.help.SetSize(a.width, a.height)
 
-	// Reserve 2 lines for header + 1 for statusbar + optional 1 for filter
-	contentHeight := a.height - 2
-	if a.filter.Active() {
-		contentHeight--
-	}
+	ch := a.contentHeight()
 
 	if a.preview.Visible() {
 		tableW := a.width * 55 / 100
 		previewW := a.width - tableW
-		a.table.SetSize(tableW, contentHeight)
-		a.preview.SetSize(previewW, contentHeight)
+		a.table.SetSize(tableW, ch)
+		a.preview.SetSize(previewW, ch)
 	} else {
-		a.table.SetSize(a.width, contentHeight)
+		a.table.SetSize(a.width, ch)
 	}
 }
 
