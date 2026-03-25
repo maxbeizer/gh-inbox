@@ -6,10 +6,9 @@ import (
 	ghAPI "github.com/cli/go-gh/v2/pkg/api"
 )
 
-// Client wraps GitHub REST and GraphQL clients.
+// Client wraps the GitHub REST client.
 type Client struct {
 	rest *ghAPI.RESTClient
-	gql  *ghAPI.GraphQLClient
 }
 
 // NewClient creates a new API client using gh auth.
@@ -19,10 +18,5 @@ func NewClient() (*Client, error) {
 		return nil, fmt.Errorf("creating REST client: %w", err)
 	}
 
-	gql, err := ghAPI.DefaultGraphQLClient()
-	if err != nil {
-		return nil, fmt.Errorf("creating GraphQL client: %w", err)
-	}
-
-	return &Client{rest: rest, gql: gql}, nil
+	return &Client{rest: rest}, nil
 }

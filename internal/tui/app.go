@@ -480,17 +480,31 @@ func (a *App) fetchSelectedDetail() tea.Cmd {
 		return nil
 	}
 
-	// Only fetch detail for PR and Issue types
-	if n.Subject.Type != model.SubjectPullRequest && n.Subject.Type != model.SubjectIssue {
+	// Only fetch detail for types with a subject API URL
+	if n.Subject.URL == "" {
+		return nil
+	}
+
+	// Support PR, Issue, and Release previews
+	isPR := n.Subject.Type == model.SubjectPullRequest
+	isIssue := n.Subject.Type == model.SubjectIssue
+	isRelease := n.Subject.Type == model.SubjectRelease
+
+	if !isPR && !isIssue && !isRelease {
 		return nil
 	}
 
 	a.preview.SetLoading(true)
-	htmlURL := n.HTMLURL()
-	isPR := n.Subject.Type == model.SubjectPullRequest
+	subjectURL := n.Subject.URL
 	id := n.ID
 	return func() tea.Msg {
-		detail, err := a.client.FetchSubjectDetail(htmlURL, isPR)
+		var detail *api.SubjectDetail
+		var err error
+		if isRelease {
+			detail, err = a.client.FetchReleaseDetail(subjectURL)
+		} else {
+			detail, err = a.client.FetchSubjectDetail(subjectURL, isPR)
+		}
 		return SubjectDetailFetchedMsg{Detail: detail, ID: id, Err: err}
 	}
 }
