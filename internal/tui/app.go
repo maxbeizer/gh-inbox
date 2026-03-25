@@ -420,6 +420,8 @@ func (a *App) applyFilters() {
 	a.table.SetNotifications(filtered)
 	a.header.SetFilters(a.filters)
 	a.header.SetCount(len(filtered), len(a.allNotifications))
+	a.statusbar.SetFilters(a.filters)
+	a.statusbar.SetCount(len(filtered), len(a.allNotifications))
 }
 
 // Command helpers
