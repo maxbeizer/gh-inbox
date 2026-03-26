@@ -110,9 +110,11 @@ func (a App) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			a.statusbar.SetStatus("Marked as read", false)
 		case "done":
 			a.removeNotif(msg.ID)
+			a.closePreviewAndRelayout()
 			a.statusbar.SetStatus("Marked as done", false)
 		case "unsubscribe":
 			a.removeNotif(msg.ID)
+			a.closePreviewAndRelayout()
 			a.statusbar.SetStatus("Unsubscribed", false)
 		}
 		return a, nil
@@ -620,4 +622,11 @@ func (a *App) removeNotif(id string) {
 		}
 	}
 	a.applyFilters()
+}
+
+func (a *App) closePreviewAndRelayout() {
+	if a.preview.Visible() {
+		a.preview.Toggle()
+		a.layoutComponents()
+	}
 }
