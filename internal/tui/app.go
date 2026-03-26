@@ -439,10 +439,9 @@ func (a *App) applyFilters() {
 func (a *App) fetchNotifications() tea.Cmd {
 	a.loading = true
 	a.header.SetLoading(true)
-	all := a.filters.Mode == model.FilterAll
-	participating := a.filters.Mode == model.FilterParticipating
 	return func() tea.Msg {
-		notifs, err := a.client.ListNotifications(all, participating)
+		// Always fetch all notifications; filtering is done client-side
+		notifs, err := a.client.ListNotifications(true, false)
 		return NotificationsFetchedMsg{Notifications: notifs, Err: err}
 	}
 }
@@ -452,7 +451,7 @@ func (a *App) refreshNotifications(all bool) tea.Cmd {
 	a.header.SetLoading(true)
 	a.statusbar.SetStatus("Refreshing...", false)
 	return func() tea.Msg {
-		notifs, err := a.client.ListNotifications(all, false)
+		notifs, err := a.client.ListNotifications(true, false)
 		return NotificationsFetchedMsg{Notifications: notifs, Err: err}
 	}
 }
