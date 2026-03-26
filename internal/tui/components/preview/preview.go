@@ -11,6 +11,8 @@ import (
 	"github.com/maxbeizer/gh-inbox/internal/tui/theme"
 )
 
+const maxCacheSize = 100
+
 // Model is the preview side panel component.
 type Model struct {
 	width      int
@@ -56,6 +58,10 @@ func (m *Model) SetLoading(loading bool) {
 func (m *Model) SetDetail(id string, detail *api.SubjectDetail) {
 	m.detail = detail
 	if detail != nil {
+		// Evict oldest entries if cache is full
+		if len(m.cache) >= maxCacheSize {
+			m.cache = make(map[string]*api.SubjectDetail)
+		}
 		m.cache[id] = detail
 	}
 	m.loading = false
@@ -79,6 +85,11 @@ func (m *Model) SetNotification(n *model.Notification) {
 // GetCached returns cached detail for a notification ID, if available.
 func (m *Model) GetCached(id string) *api.SubjectDetail {
 	return m.cache[id]
+}
+
+// ClearCache removes all cached subject details.
+func (m *Model) ClearCache() {
+	m.cache = make(map[string]*api.SubjectDetail)
 }
 
 // ScrollDown scrolls the preview content down.

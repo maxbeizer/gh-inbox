@@ -99,15 +99,20 @@ func toNotification(a apiNotification) model.Notification {
 	}
 }
 
+const (
+	perPage  = 50
+	maxPages = 10 // Cap at 500 notifications to avoid rate limiting
+)
+
 // ListNotifications fetches notifications from the GitHub API.
+// Fetches up to maxPages pages (500 notifications) to avoid excessive API calls.
 func (c *Client) ListNotifications(all, participating bool) ([]model.Notification, error) {
 	var allNotifications []model.Notification
-	page := 1
 
-	for {
+	for page := 1; page <= maxPages; page++ {
 		var raw []apiNotification
-		path := fmt.Sprintf("notifications?all=%t&participating=%t&per_page=50&page=%d",
-			all, participating, page)
+		path := fmt.Sprintf("notifications?all=%t&participating=%t&per_page=%d&page=%d",
+			all, participating, perPage, page)
 
 		err := c.rest.Get(path, &raw)
 		if err != nil {
@@ -118,10 +123,9 @@ func (c *Client) ListNotifications(all, participating bool) ([]model.Notificatio
 			allNotifications = append(allNotifications, toNotification(a))
 		}
 
-		if len(raw) < 50 {
+		if len(raw) < perPage {
 			break
 		}
-		page++
 	}
 
 	return allNotifications, nil

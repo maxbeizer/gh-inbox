@@ -27,15 +27,17 @@ gh-inbox is a rich TUI (Terminal User Interface) for managing GitHub notificatio
 - Packages organized by functionality, not by layer
 
 ## Bubble Tea Patterns
-- Root model composes child component models
-- Each component implements `Init()`, `Update()`, `View()`
+- Root model (`*App`) uses pointer receivers for all tea.Model methods
+- Root composes child component models (header, table, preview, statusbar, filter, help)
 - Custom `tea.Msg` types in `tui/messages.go` for inter-component communication
-- Keybindings defined centrally in `tui/keys.go`
-- Styles defined centrally in `tui/styles.go`
+- Keybindings defined centrally in `tui/keys.go` (mirrors GitHub web shortcuts)
+- Theme/styles defined in `tui/theme/theme.go` (separate package to avoid import cycles)
 
 ## API Patterns
-- REST for notification CRUD (list, mark read, mark done, unsubscribe)
-- GraphQL for subject detail fetches (PR/issue bodies for preview)
+- REST for all GitHub API access (notifications CRUD + subject detail fetches)
+- Pagination capped at 10 pages (500 notifications) to avoid rate limiting
+- Always fetches with `all=true`; filtering is done client-side
+- Preview detail cache bounded at 100 entries, cleared on refresh
 - All API access through `go-gh` which handles auth via `gh auth`
 
 ## Testing

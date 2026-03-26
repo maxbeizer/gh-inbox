@@ -49,8 +49,8 @@ type App struct {
 }
 
 // NewApp creates the root TUI application model.
-func NewApp(client *api.Client) App {
-	return App{
+func NewApp(client *api.Client) *App {
+	return &App{
 		client:    client,
 		keys:      DefaultKeyMap(),
 		header:    header.New(),
@@ -63,12 +63,12 @@ func NewApp(client *api.Client) App {
 }
 
 // Init starts the application by fetching notifications.
-func (a App) Init() tea.Cmd {
+func (a *App) Init() tea.Cmd {
 	return a.fetchNotifications()
 }
 
 // Update handles messages.
-func (a App) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (a *App) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmds []tea.Cmd
 
 	switch msg := msg.(type) {
@@ -129,7 +129,7 @@ func (a App) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return a, tea.Batch(cmds...)
 }
 
-func (a App) handleKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
+func (a *App) handleKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	// If filter input is active, route keys there
 	if a.filter.Active() {
 		return a.handleFilterKey(msg)
@@ -242,7 +242,7 @@ func (a App) handleKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	return a, nil
 }
 
-func (a App) handleFilterKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
+func (a *App) handleFilterKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	switch {
 	case key.Matches(msg, a.keys.Escape):
 		a.filter.Clear()
@@ -264,7 +264,7 @@ func (a App) handleFilterKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	}
 }
 
-func (a App) handleMouse(msg tea.MouseMsg) (tea.Model, tea.Cmd) {
+func (a *App) handleMouse(msg tea.MouseMsg) (tea.Model, tea.Cmd) {
 	// Basic mouse support: click on row to select
 	if click, ok := msg.(tea.MouseClickMsg); ok {
 		m := click.Mouse()
@@ -284,7 +284,7 @@ func (a App) handleMouse(msg tea.MouseMsg) (tea.Model, tea.Cmd) {
 }
 
 // View renders the entire application.
-func (a App) View() tea.View {
+func (a *App) View() tea.View {
 	var content string
 
 	if a.quitting {
@@ -450,6 +450,7 @@ func (a *App) refreshNotifications(all bool) tea.Cmd {
 	a.loading = true
 	a.header.SetLoading(true)
 	a.statusbar.SetStatus("Refreshing...", false)
+	a.preview.ClearCache()
 	return func() tea.Msg {
 		notifs, err := a.client.ListNotifications(true, false)
 		return NotificationsFetchedMsg{Notifications: notifs, Err: err}
