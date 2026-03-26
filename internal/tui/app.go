@@ -329,6 +329,7 @@ func (a App) View() tea.View {
 		}
 		mainContent = lipgloss.NewStyle().
 			Height(mainH).
+			MaxHeight(mainH).
 			Width(a.width).
 			Render(mainContent)
 		sections = append(sections, mainContent)
