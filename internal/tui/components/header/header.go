@@ -44,35 +44,38 @@ func (m *Model) SetLoading(loading bool) {
 	m.loading = loading
 }
 
-// View renders the header.
+// View renders the header as a single line.
 func (m Model) View() string {
 	title := theme.HeaderTitleStyle.Render("📬 gh-inbox")
 
-	filterLabel := fmt.Sprintf(" [%s]", m.filters.Mode.Label())
-	sortLabel := fmt.Sprintf(" sort:%s", m.filters.Sort.Label())
-	filter := theme.HeaderFilterStyle.Render(filterLabel + sortLabel)
-
-	if m.filters.SearchText != "" {
-		filter += theme.SearchPromptStyle.Render(fmt.Sprintf(" 🔍 %q", m.filters.SearchText))
-	}
+	filterLabel := fmt.Sprintf("[%s]", m.filters.Mode.Label())
+	sortLabel := fmt.Sprintf("sort:%s", m.filters.Sort.Label())
 
 	var status string
 	if m.loading {
-		status = theme.SpinnerStyle.Render(" ⟳ loading...")
+		status = theme.SpinnerStyle.Render("⟳ loading...")
 	} else {
-		status = theme.HeaderFilterStyle.Render(fmt.Sprintf(" %d/%d", m.count, m.total))
+		status = fmt.Sprintf("%d/%d", m.count, m.total)
 	}
 
-	left := title + filter
-	right := status
+	parts := title + "  " +
+		theme.HeaderFilterStyle.Render(filterLabel) + " " +
+		theme.HeaderFilterStyle.Render(sortLabel)
 
-	gap := m.width - lipgloss.Width(left) - lipgloss.Width(right)
-	if gap < 0 {
+	if m.filters.SearchText != "" {
+		parts += " " + theme.SearchPromptStyle.Render(fmt.Sprintf("🔍 %q", m.filters.SearchText))
+	}
+
+	right := theme.HeaderFilterStyle.Render(status)
+
+	// Use available width minus 2 for padding
+	usable := m.width - 2
+	gap := usable - lipgloss.Width(parts) - lipgloss.Width(right)
+	if gap < 1 {
 		gap = 1
 	}
-	spacer := lipgloss.NewStyle().Width(gap).Render("")
 
-	row := lipgloss.JoinHorizontal(lipgloss.Top, left, spacer, right)
+	row := parts + lipgloss.NewStyle().Width(gap).Render("") + right
 
-	return theme.HeaderStyle.Width(m.width).Render(row)
+	return theme.HeaderStyle.Width(m.width).MaxHeight(1).Render(row)
 }
