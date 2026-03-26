@@ -9,11 +9,14 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/maxbeizer/gh-inbox/internal/api"
+	"github.com/maxbeizer/gh-inbox/internal/demo"
 	"github.com/maxbeizer/gh-inbox/internal/tui"
 )
 
 func main() {
 	userMessages := log.New(os.Stderr, "", 0)
+
+	var demoMode bool
 
 	rootCmd := &cobra.Command{
 		Use:   "gh-inbox",
@@ -23,12 +26,19 @@ Browse, triage, and act on notifications with keyboard shortcuts and a
 beautiful visual interface inspired by gh-dash.`,
 		SilenceUsage: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			client, err := api.NewClient()
-			if err != nil {
-				return fmt.Errorf("failed to initialize GitHub client: %w\nMake sure you are authenticated with 'gh auth login'", err)
+			var app *tui.App
+
+			if demoMode {
+				app = tui.NewApp(nil)
+				app.LoadDemoData(demo.Notifications())
+			} else {
+				client, err := api.NewClient()
+				if err != nil {
+					return fmt.Errorf("failed to initialize GitHub client: %w\nMake sure you are authenticated with 'gh auth login'", err)
+				}
+				app = tui.NewApp(client)
 			}
 
-			app := tui.NewApp(client)
 			p := tea.NewProgram(app)
 			if _, err := p.Run(); err != nil {
 				return fmt.Errorf("error running TUI: %w", err)
@@ -36,6 +46,8 @@ beautiful visual interface inspired by gh-dash.`,
 			return nil
 		},
 	}
+
+	rootCmd.Flags().BoolVar(&demoMode, "demo", false, "Run with fake data (no GitHub API calls)")
 
 	if err := rootCmd.Execute(); err != nil {
 		userMessages.Printf("error: %v", err)

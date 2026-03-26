@@ -2,6 +2,8 @@
 
 📬 A rich TUI for managing GitHub notifications — keyboard-native, visually appealing, inspired by [gh-dash](https://github.com/dlvhdr/gh-dash).
 
+<img src="demo.gif" alt="gh-inbox demo" width="100%">
+
 ## Features
 
 - **Browse notifications** with a beautiful table view showing reason, type, repo, title, and relative time

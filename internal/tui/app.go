@@ -46,6 +46,7 @@ type App struct {
 	loading  bool
 	ready    bool
 	quitting bool
+	demoMode bool
 }
 
 // NewApp creates the root TUI application model.
@@ -62,8 +63,19 @@ func NewApp(client *api.Client) *App {
 	}
 }
 
+// LoadDemoData populates the app with fake data (no API needed).
+func (a *App) LoadDemoData(notifs []model.Notification) {
+	a.demoMode = true
+	a.allNotifications = notifs
+}
+
 // Init starts the application by fetching notifications.
 func (a *App) Init() tea.Cmd {
+	if a.demoMode {
+		return func() tea.Msg {
+			return NotificationsFetchedMsg{Notifications: a.allNotifications}
+		}
+	}
 	return a.fetchNotifications()
 }
 
@@ -437,16 +449,22 @@ func (a *App) applyFilters() {
 // Command helpers
 
 func (a *App) fetchNotifications() tea.Cmd {
+	if a.demoMode {
+		return nil
+	}
 	a.loading = true
 	a.header.SetLoading(true)
 	return func() tea.Msg {
-		// Always fetch all notifications; filtering is done client-side
 		notifs, err := a.client.ListNotifications(true, false)
 		return NotificationsFetchedMsg{Notifications: notifs, Err: err}
 	}
 }
 
 func (a *App) refreshNotifications(all bool) tea.Cmd {
+	if a.demoMode {
+		a.statusbar.SetStatus("Demo mode — data is static", false)
+		return nil
+	}
 	a.loading = true
 	a.header.SetLoading(true)
 	a.statusbar.SetStatus("Refreshing...", false)
@@ -511,6 +529,11 @@ func (a *App) markSelectedRead() tea.Cmd {
 		return nil
 	}
 	id := n.ID
+	if a.demoMode {
+		a.markNotifRead(id)
+		a.statusbar.SetStatus("Marked as read", false)
+		return nil
+	}
 	return func() tea.Msg {
 		err := a.client.MarkThreadRead(id)
 		return ActionCompleteMsg{Action: "read", ID: id, Err: err}
@@ -522,8 +545,6 @@ func (a *App) markSelectedUnread() tea.Cmd {
 	if n == nil {
 		return nil
 	}
-	// Toggle unread state locally — the API has no "mark unread" endpoint,
-	// but the notification will reappear as unread on next sync if still active.
 	for i := range a.allNotifications {
 		if a.allNotifications[i].ID == n.ID {
 			a.allNotifications[i].Unread = true
@@ -541,6 +562,12 @@ func (a *App) markSelectedDone() tea.Cmd {
 		return nil
 	}
 	id := n.ID
+	if a.demoMode {
+		a.removeNotif(id)
+		a.closePreviewAndRelayout()
+		a.statusbar.SetStatus("Marked as done", false)
+		return nil
+	}
 	return func() tea.Msg {
 		err := a.client.MarkThreadDone(id)
 		return ActionCompleteMsg{Action: "done", ID: id, Err: err}
@@ -553,8 +580,13 @@ func (a *App) unsubscribeSelected() tea.Cmd {
 		return nil
 	}
 	id := n.ID
+	if a.demoMode {
+		a.removeNotif(id)
+		a.closePreviewAndRelayout()
+		a.statusbar.SetStatus("Unsubscribed", false)
+		return nil
+	}
 	return func() tea.Msg {
-		// Unsubscribe from future notifications AND mark done to dismiss
 		_ = a.client.Unsubscribe(id)
 		err := a.client.MarkThreadDone(id)
 		return ActionCompleteMsg{Action: "unsubscribe", ID: id, Err: err}
