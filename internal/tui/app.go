@@ -227,7 +227,7 @@ func (a App) handleKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	case key.Matches(msg, a.keys.Filter):
 		a.filters.Mode = a.filters.Mode.Next()
 		a.applyFilters()
-		return a, nil
+		return a, a.fetchNotifications()
 
 	case key.Matches(msg, a.keys.Sort):
 		a.filters.Sort = a.filters.Sort.Next()
