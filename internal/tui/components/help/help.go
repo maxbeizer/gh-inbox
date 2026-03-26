@@ -13,6 +13,11 @@ type binding struct {
 	desc string
 }
 
+type legend struct {
+	icon string
+	desc string
+}
+
 var sections = []struct {
 	title    string
 	bindings []binding
@@ -60,6 +65,37 @@ var sections = []struct {
 	},
 }
 
+var reasonLegend = []legend{
+	{"💬", "Mentioned"},
+	{"👥", "Team mentioned"},
+	{"👀", "Review requested"},
+	{"👤", "Assigned"},
+	{"✍️", "You authored"},
+	{"💭", "You commented"},
+	{"🔄", "State changed"},
+	{"🔔", "Subscribed / watching"},
+	{"📌", "Manually subscribed"},
+	{"⚙️", "CI activity"},
+	{"🚨", "Security alert"},
+	{"✋", "Approval requested"},
+	{"📫", "Other"},
+}
+
+var typeLegend = []legend{
+	{"🔀", "Pull Request"},
+	{"🔴", "Issue"},
+	{"📝", "Commit"},
+	{"🏷️", "Release"},
+	{"💬", "Discussion"},
+	{"✅", "Check Suite"},
+	{"📌", "Other"},
+}
+
+var statusLegend = []legend{
+	{"●", "Unread"},
+	{"○", "Read"},
+}
+
 // Model is the full-screen help overlay.
 type Model struct {
 	visible bool
@@ -94,34 +130,79 @@ func (m Model) View() string {
 		return ""
 	}
 
-	var b strings.Builder
+	var left strings.Builder
+	var right strings.Builder
 
-	b.WriteString(theme.HelpTitleStyle.Render("⌨️  Keyboard Shortcuts"))
-	b.WriteString("\n\n")
+	// ── Left column: keyboard shortcuts ──
+	left.WriteString(theme.HelpTitleStyle.Render("⌨️  Keyboard Shortcuts"))
+	left.WriteString("\n\n")
 
 	for _, section := range sections {
-		b.WriteString(lipgloss.NewStyle().
+		left.WriteString(lipgloss.NewStyle().
 			Bold(true).
 			Foreground(theme.ColorPeach).
-			MarginBottom(0).
 			Render(section.title))
-		b.WriteString("\n")
+		left.WriteString("\n")
 
 		for _, bind := range section.bindings {
 			key := theme.HelpKeyStyle.Render(bind.key)
 			desc := theme.HelpDescStyle.Render(bind.desc)
-			b.WriteString("  " + key + desc + "\n")
+			left.WriteString("  " + key + desc + "\n")
 		}
-		b.WriteString("\n")
+		left.WriteString("\n")
 	}
 
-	b.WriteString(theme.PreviewMetaStyle.Render("Press ? or Esc to close"))
+	// ── Right column: icon legends ──
+	right.WriteString(theme.HelpTitleStyle.Render("📖  Icon Legend"))
+	right.WriteString("\n\n")
 
-	content := b.String()
+	iconStyle := lipgloss.NewStyle().Width(4)
+	descStyle := theme.HelpDescStyle
+
+	// Reason icons (first column in each row)
+	right.WriteString(lipgloss.NewStyle().
+		Bold(true).
+		Foreground(theme.ColorPeach).
+		Render("Reason (why you were notified)"))
+	right.WriteString("\n")
+	for _, item := range reasonLegend {
+		right.WriteString("  " + iconStyle.Render(item.icon) + descStyle.Render(item.desc) + "\n")
+	}
+	right.WriteString("\n")
+
+	// Type icons (second column in each row)
+	right.WriteString(lipgloss.NewStyle().
+		Bold(true).
+		Foreground(theme.ColorPeach).
+		Render("Type (what the notification is about)"))
+	right.WriteString("\n")
+	for _, item := range typeLegend {
+		right.WriteString("  " + iconStyle.Render(item.icon) + descStyle.Render(item.desc) + "\n")
+	}
+	right.WriteString("\n")
+
+	// Status
+	right.WriteString(lipgloss.NewStyle().
+		Bold(true).
+		Foreground(theme.ColorPeach).
+		Render("Status"))
+	right.WriteString("\n")
+	for _, item := range statusLegend {
+		right.WriteString("  " + iconStyle.Render(item.icon) + descStyle.Render(item.desc) + "\n")
+	}
+
+	// Layout: two columns
+	colW := (m.width - 10) / 2
+	leftCol := lipgloss.NewStyle().Width(colW).Render(left.String())
+	rightCol := lipgloss.NewStyle().Width(colW).Render(right.String())
+
+	content := lipgloss.JoinHorizontal(lipgloss.Top, leftCol, "  ", rightCol)
+	content += "\n\n" + theme.PreviewMetaStyle.Render("Press ? or Esc to close")
 
 	return lipgloss.NewStyle().
 		Width(m.width).
 		Height(m.height).
+		MaxHeight(m.height).
 		Background(theme.ColorBase).
 		Padding(2, 4).
 		Render(content)
