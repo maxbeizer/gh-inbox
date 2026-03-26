@@ -75,10 +75,8 @@ git push origin v0.2.0
 
 ## Inspiration
 
-gh-inbox wouldn't exist without these projects:
-
-- **[gh-dash](https://github.com/dlvhdr/gh-dash)** — the gold standard for GitHub TUIs. gh-inbox borrows its visual language: Bubble Tea composition, lipgloss styling, table + preview layout, and the general "make the terminal feel good" philosophy.
-- **[gh-not](https://github.com/nobe4/gh-not)** — a powerful notifications manager with rule-based filtering and local caching. gh-not proved that the GitHub notifications API is workable and that there's a real need for better notification tooling. gh-inbox takes a different approach (interactive TUI vs. rule engine) but shares the same frustration with GitHub's default notification experience.
+- [gh-dash](https://github.com/dlvhdr/gh-dash)
+- [gh-not](https://github.com/nobe4/gh-not)
 
 ## License
 
