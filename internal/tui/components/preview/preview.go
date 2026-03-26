@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"strings"
 
-	"charm.land/bubbles/v2/viewport"
 	"charm.land/lipgloss/v2"
 
 	"github.com/maxbeizer/gh-inbox/internal/api"
@@ -14,22 +13,21 @@ import (
 
 // Model is the preview side panel component.
 type Model struct {
-	viewport viewport.Model
-	width    int
-	height   int
-	visible  bool
-	detail   *api.SubjectDetail
-	notif    *model.Notification
-	loading  bool
-	cache    map[string]*api.SubjectDetail
+	width      int
+	height     int
+	visible    bool
+	detail     *api.SubjectDetail
+	notif      *model.Notification
+	loading    bool
+	cache      map[string]*api.SubjectDetail
+	scrollPos  int
+	contentLen int
 }
 
 // New creates a new preview model.
 func New() Model {
-	vp := viewport.New()
 	return Model{
-		viewport: vp,
-		cache:    make(map[string]*api.SubjectDetail),
+		cache: make(map[string]*api.SubjectDetail),
 	}
 }
 
@@ -37,8 +35,6 @@ func New() Model {
 func (m *Model) SetSize(w, h int) {
 	m.width = w
 	m.height = h
-	m.viewport.SetWidth(w - 4) // padding
-	m.viewport.SetHeight(h - 2)
 }
 
 // Visible returns whether the preview is showing.
@@ -63,22 +59,21 @@ func (m *Model) SetDetail(id string, detail *api.SubjectDetail) {
 		m.cache[id] = detail
 	}
 	m.loading = false
-	m.updateViewport()
+	m.scrollPos = 0
 }
 
 // SetNotification sets which notification is being previewed.
 func (m *Model) SetNotification(n *model.Notification) {
 	m.notif = n
+	m.scrollPos = 0
 	if n != nil {
 		if cached, ok := m.cache[n.ID]; ok {
 			m.detail = cached
 			m.loading = false
-			m.updateViewport()
 			return
 		}
 	}
 	m.detail = nil
-	m.updateViewport()
 }
 
 // GetCached returns cached detail for a notification ID, if available.
@@ -86,23 +81,32 @@ func (m *Model) GetCached(id string) *api.SubjectDetail {
 	return m.cache[id]
 }
 
-// ScrollDown scrolls the preview viewport down.
+// ScrollDown scrolls the preview content down.
 func (m *Model) ScrollDown() {
-	m.viewport.ScrollDown(5)
+	m.scrollPos += 5
+	maxScroll := m.contentLen - m.innerHeight()
+	if maxScroll < 0 {
+		maxScroll = 0
+	}
+	if m.scrollPos > maxScroll {
+		m.scrollPos = maxScroll
+	}
 }
 
-// ScrollUp scrolls the preview viewport up.
+// ScrollUp scrolls the preview content up.
 func (m *Model) ScrollUp() {
-	m.viewport.ScrollUp(5)
+	m.scrollPos -= 5
+	if m.scrollPos < 0 {
+		m.scrollPos = 0
+	}
 }
 
-func (m *Model) updateViewport() {
-	content := m.renderContent()
-	m.viewport.SetContent(content)
-	m.viewport.GotoTop()
+func (m Model) innerHeight() int {
+	// Account for border + padding
+	return max(m.height-4, 1)
 }
 
-func (m Model) renderContent() string {
+func (m *Model) renderContent() string {
 	if m.notif == nil {
 		return lipgloss.NewStyle().
 			Foreground(theme.ColorOverlay1).
@@ -115,16 +119,16 @@ func (m Model) renderContent() string {
 	b.WriteString(theme.PreviewTitleStyle.Render(m.notif.Subject.Title))
 	b.WriteString("\n\n")
 
-	meta := []string{
-		fmt.Sprintf("%s  %s  %s  %s #%d",
-			m.notif.Subject.Type.Icon(),
-			m.notif.Repository.FullName,
-			m.notif.Reason.Icon(),
-			m.notif.Reason.Label(),
-			m.notif.Subject.Number,
-		),
+	meta := fmt.Sprintf("%s  %s  %s  %s",
+		m.notif.Subject.Type.Icon(),
+		m.notif.Repository.FullName,
+		m.notif.Reason.Icon(),
+		m.notif.Reason.Label(),
+	)
+	if m.notif.Subject.Number > 0 {
+		meta += fmt.Sprintf("  #%d", m.notif.Subject.Number)
 	}
-	b.WriteString(theme.PreviewMetaStyle.Render(strings.Join(meta, "\n")))
+	b.WriteString(theme.PreviewMetaStyle.Render(meta))
 	b.WriteString("\n")
 
 	if m.loading {
@@ -165,8 +169,12 @@ func (m Model) renderContent() string {
 	// Body
 	if m.detail.Body != "" {
 		b.WriteString("\n")
+		bodyWidth := m.width - 6
+		if bodyWidth < 20 {
+			bodyWidth = 20
+		}
 		b.WriteString(lipgloss.NewStyle().
-			Width(m.width - 6).
+			Width(bodyWidth).
 			Foreground(theme.ColorText).
 			Render(m.detail.Body))
 	}
@@ -180,10 +188,23 @@ func (m Model) View() string {
 		return ""
 	}
 
-	content := m.viewport.View()
+	content := m.renderContent()
+	lines := strings.Split(content, "\n")
+	m.contentLen = len(lines)
+
+	// Apply scroll
+	start := m.scrollPos
+	if start >= len(lines) {
+		start = max(len(lines)-1, 0)
+	}
+	end := start + m.innerHeight()
+	if end > len(lines) {
+		end = len(lines)
+	}
+	visible := strings.Join(lines[start:end], "\n")
 
 	return theme.PreviewBorderStyle.
 		Width(m.width).
 		Height(m.height).
-		Render(content)
+		Render(visible)
 }

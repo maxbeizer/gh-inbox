@@ -551,7 +551,9 @@ func (a *App) unsubscribeSelected() tea.Cmd {
 	}
 	id := n.ID
 	return func() tea.Msg {
-		err := a.client.Unsubscribe(id)
+		// Unsubscribe from future notifications AND mark done to dismiss
+		_ = a.client.Unsubscribe(id)
+		err := a.client.MarkThreadDone(id)
 		return ActionCompleteMsg{Action: "unsubscribe", ID: id, Err: err}
 	}
 }
