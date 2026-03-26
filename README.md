@@ -1,6 +1,9 @@
-# gh-inbox
+# gh-inbox (archived)
 
-📬 A rich TUI for managing GitHub notifications.
+> **This project is no longer maintained.** Check out these alternatives instead:
+>
+> - [gh-news](https://github.com/chmouel/gh-news/) — a TUI for GitHub notifications
+> - [gh-not](https://github.com/nobe4/gh-not) — a notification manager with rule-based filtering
 
 <img src="demo.gif" alt="gh-inbox demo" width="100%">
 
